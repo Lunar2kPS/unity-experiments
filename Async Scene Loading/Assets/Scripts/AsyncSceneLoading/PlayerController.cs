@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -49,20 +47,15 @@ namespace AsyncSceneLoading {
                 return;
             }
 
-            UpdateInputStates(keyboard);
+            input.Set(
+                (keyboard[keys.left].isPressed ? -1 : 0) + (keyboard[keys.right].isPressed ? 1 : 0),
+                (keyboard[keys.down].isPressed ? -1 : 0) + (keyboard[keys.up].isPressed ? 1 : 0)
+            );
         }
 
         private void FixedUpdate() {
             rigidbody.velocity = DesiredVelocity;
         }
         #endregion
-
-        private void UpdateInputStates(Keyboard keyboard) {
-            input.Set(0, 0);
-            input.x += keyboard[keys.left].isPressed ? -1 : 0;
-            input.x += keyboard[keys.right].isPressed ? 1 : 0;
-            input.y += keyboard[keys.down].isPressed ? -1 : 0;
-            input.y += keyboard[keys.up].isPressed ? 1 : 0;
-        }
     }
 }

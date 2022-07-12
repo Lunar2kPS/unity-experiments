@@ -32,9 +32,26 @@ namespace AsyncSceneLoading {
 
         #region Unity Messages
         private void OnDrawGizmosSelected() {
-            foreach (SceneArea area in Areas) {
-                Bounds bounds = area.Bounds;
-                Gizmos.DrawWireCube(bounds.center, bounds.size);
+            Color prev = Gizmos.color;
+            Random.State prevState = Random.state;
+            try {
+                Random.InitState(Random.Range(0, int.MaxValue));
+                foreach (SceneArea area in Areas) {
+                    Color color = Color.HSVToRGB(Random.Range(0f, 1f), 0.8f, 0.8f);
+                    color.a = 0.3f;
+                    Color outlineColor = 2 * color;
+                    outlineColor.a = 0.3f;
+
+                    Gizmos.color = color;
+                    Bounds bounds = area.Bounds;
+                    Gizmos.DrawCube(bounds.center, bounds.size);
+
+                    Gizmos.color = outlineColor;
+                    Gizmos.DrawWireCube(bounds.center, bounds.size);
+                }
+            } finally {
+                Gizmos.color = prev;
+                Random.state = prevState;
             }
         }
 

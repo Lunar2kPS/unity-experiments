@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 234de038763c9814dbaace146ef21e29, type: 3}
-  m_Name: Scene (1, 0)
+  m_Name: SN-0002
   m_EditorClassIdentifier: 
-  scenePath: Assets/Scenes/Dynamic/Scene (1, 0).unity
+  scenePath: Assets/Scenes/Dynamic/SN-0002.unity
   bounds:
-    m_Center: {x: 20, y: 0, z: 0}
-    m_Extent: {x: 15, y: 25, z: 15}
+    m_Center: {x: -15, y: 0, z: 8.3}
+    m_Extent: {x: 20, y: 25, z: 26.18}

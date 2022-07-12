@@ -179,6 +179,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Terrain
       objectReference: {fileID: 0}
+    - target: {fileID: 7827084492743818278, guid: 4c69913291e708d4a9868348bd8e94b7, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 7ea56990808844847a6644fb5ab6e209, type: 2}
     m_RemovedComponents: []
     m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: 4c69913291e708d4a9868348bd8e94b7, type: 3}

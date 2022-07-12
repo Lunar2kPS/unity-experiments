@@ -3,11 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace AsyncSceneLoading {
     /// <summary>
     /// A <see cref="MonoBehaviour"/> script that checks every on Update whether it should be loading or unloading scenes based on the Transform positions of the <see cref="ObjectsOfInterest"/>.
     /// </summary>
+    [ExecuteAlways]
     public class SceneAreaLoader : MonoBehaviour {
+        [Tooltip("By default, gizmos are drawn based on any scene object selections you currently have in the editor.\n\n" +
+            "Set this value to false to stop drawing gizmos.")]
+        [SerializeField] private bool drawGizmos = true;
+
         [Tooltip("Defines one or more object(s) that determine the areas around which maps should be loaded at any given time.")]
         [SerializeField] private Transform[] objectsOfInterest;
 
@@ -20,6 +29,8 @@ namespace AsyncSceneLoading {
         /// </summary>
         private HashSet<string> inProgressLoads = new HashSet<string>();
 
+        private List<string> selectedScenePaths = null;
+
         /// <summary>
         /// A collection of all the <see cref="objectsOfInterest"/> without <c>null</c> values.
         /// </summary>
@@ -31,31 +42,28 @@ namespace AsyncSceneLoading {
         public IEnumerable<SceneArea> Areas => areas.Where(a => a != null);
 
         #region Unity Messages
-        private void OnDrawGizmosSelected() {
-            Color prev = Gizmos.color;
-            Random.State prevState = Random.state;
-            try {
-                Random.InitState(Random.Range(0, int.MaxValue));
-                foreach (SceneArea area in Areas) {
-                    Color color = Color.HSVToRGB(Random.Range(0f, 1f), 0.8f, 0.8f);
-                    color.a = 0.3f;
-                    Color outlineColor = 2 * color;
-                    outlineColor.a = 0.3f;
-
-                    Gizmos.color = color;
-                    Bounds bounds = area.Bounds;
-                    Gizmos.DrawCube(bounds.center, bounds.size);
-
-                    Gizmos.color = outlineColor;
-                    Gizmos.DrawWireCube(bounds.center, bounds.size);
-                }
-            } finally {
-                Gizmos.color = prev;
-                Random.state = prevState;
-            }
+#if UNITY_EDITOR
+        private void OnDrawGizmos() {
+            if (drawGizmos)
+                DrawGizmos(selectedScenePaths);
         }
 
+        private void OnEnable() {
+            selectedScenePaths = new List<string>();
+            Selection.selectionChanged -= UpdateSelectedScenePaths;
+            Selection.selectionChanged += UpdateSelectedScenePaths;
+        }
+
+        private void OnDisable() {
+            Selection.selectionChanged -= UpdateSelectedScenePaths;
+            selectedScenePaths = null;
+        }
+#endif
+
         private void Update() {
+            if (!Application.IsPlaying(this))
+                return;
+
             //NOTE: Not fully optimized due to all the Transform.position calls
             foreach (SceneArea area in Areas) {
                 if (IsInProgress(area))
@@ -73,7 +81,7 @@ namespace AsyncSceneLoading {
                 }
             }
         }
-        #endregion
+#endregion
 
         /// <summary>
         /// Checks if any of the <see cref="ObjectsOfInterest"/> are contained within the world-space bounds of the given <see cref="SceneArea"/>.
@@ -109,5 +117,60 @@ namespace AsyncSceneLoading {
             operation.completed += (AsyncOperation a) => inProgressLoads.Remove(scenePath);
             return operation;
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Updates the list of scenes that the user has objects selected inside of.<br />
+        /// For UX, we only draw the gizmos of scenes that the user is selected objects inside of, so they can get an idea of the extents of each scene's bounds.
+        /// </summary>
+        private void UpdateSelectedScenePaths() {
+            selectedScenePaths.Clear();
+            foreach (Object obj in Selection.objects) {
+                switch (obj) {
+                    case GameObject gameObject:
+                        selectedScenePaths.Add(gameObject.scene.path);
+                        break;
+                    case Component component:
+                        selectedScenePaths.Add(component.gameObject.scene.path);
+                        break;
+                }
+            }
+            selectedScenePaths.RemoveAll(s => Areas.FirstOrDefault(a => a.ScenePath == s) == null);
+        }
+
+        private void DrawGizmos(IEnumerable<string> scenePaths) {
+            int i = 0;
+            foreach (string scenePath in scenePaths) {
+                SceneArea area = Areas.FirstOrDefault(s => s.ScenePath == scenePath);
+                if (area == null) {
+                    Debug.LogWarning("Failed to draw gizmos for scenePath = " + scenePath);
+                    continue;
+                }
+                DrawGizmos(area, i++);
+            }
+        }
+
+        private void DrawGizmos(SceneArea area, int seed) {
+            Color prev = Gizmos.color;
+            Random.State prevState = Random.state;
+            try {
+                Random.InitState(seed);
+                Color color = Color.HSVToRGB(Random.Range(0f, 1f), 0.8f, 0.8f);
+                color.a = 0.3f;
+                Color outlineColor = 2 * color;
+                outlineColor.a = 0.3f;
+
+                Gizmos.color = color;
+                Bounds bounds = area.Bounds;
+                Gizmos.DrawCube(bounds.center, bounds.size);
+
+                Gizmos.color = outlineColor;
+                Gizmos.DrawWireCube(bounds.center, bounds.size);
+            } finally {
+                Gizmos.color = prev;
+                Random.state = prevState;
+            }
+        }
+#endif
     }
 }

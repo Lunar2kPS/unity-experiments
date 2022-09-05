@@ -44,24 +44,38 @@ namespace RendererSkins {
 #endif
 
         private void OnEnable() {
+#if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= DestroyPrefabInstance;
+            AssemblyReloadEvents.beforeAssemblyReload += DestroyPrefabInstance;
+#endif
             if (system != null) {
                 system.onActiveSkinChanged -= UpdateSkin;
                 system.onActiveSkinChanged += UpdateSkin;
+                UpdateSkin(system.ActiveSkin);
             }
         }
 
         private void OnDisable() {
+#if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= DestroyPrefabInstance;
+#endif
+
             if (system != null) {
                 system.onActiveSkinChanged -= UpdateSkin;
             }
         }
 
+        private void DestroyPrefabInstance() {
+            if (Application.IsPlaying(this))
+                GameObject.Destroy(prefabInstance);
+            else
+                GameObject.DestroyImmediate(prefabInstance);
+        }
+
+
         private void UpdateSkin(RendererSkin skin) {
             if (prefabInstance != null) {
-                if (Application.IsPlaying(this))
-                    GameObject.Destroy(prefabInstance);
-                else
-                    GameObject.DestroyImmediate(prefabInstance);
+                DestroyPrefabInstance();
                 prefabInstance = null;
             }
 
